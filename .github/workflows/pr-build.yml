@@ -12,7 +12,9 @@ jobs:
         run: git submodule update --init --recursive
 
       - name: Build Repo for Windows
-        run: .\build-All.ps1
+        run: |
+          get-location
+          dir env:*
         working-directory: ${{env.GITHUB_WORKSPACE}}
         env:
           IsAutomatedBuild: true
