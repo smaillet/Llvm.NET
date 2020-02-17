@@ -13,7 +13,7 @@ jobs:
 
       - name: Build Repo for Windows
         run: .\build-All.ps1
-        working-directory: $GITHUB_WORKSPACE
+        working-directory: ${{env.GITHUB_WORKSPACE}}
         env:
           IsAutomatedBuild: true
           IsPullRequestBuild: true
@@ -21,4 +21,4 @@ jobs:
 
       - name: Run unit tests
         run: .\Invoke-unittests.ps1
-        working-directory: $GITHUB_WORKSPACE
+        working-directory: ${{env.GITHUB_WORKSPACE}}
