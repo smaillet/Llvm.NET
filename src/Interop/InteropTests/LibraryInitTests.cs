@@ -17,38 +17,23 @@ namespace Ubiquity.NET.Llvm.Interop.UT
         [DistinctProcessTestMethod]
         public void TestLibraryInit( )
         {
-            using var lib = Library.InitializeLLVM(LibLLVMCodeGenTarget.CodeGenTarget_Native);
+            using var lib = Library.InitializeLLVM();
             Assert.IsNotNull(lib);
         }
 
         [DistinctProcessTestMethod]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Style", "IDE0063:Use simple 'using' statement", Justification = "Explicit scoping helps make usage more clear" )]
         public void TestLibraryReInit( )
         {
-            using(var lib = Library.InitializeLLVM(LibLLVMCodeGenTarget.CodeGenTarget_Native))
+            using(var lib = Library.InitializeLLVM())
             {
                 Assert.IsNotNull(lib);
             }
 
-            _ = Assert.ThrowsExactly<InvalidOperationException>(()=>
+            using(var lib2 = Library.InitializeLLVM())
             {
-                // attempt to re-initialize the library. This is expected
-                // to fail. The runtime has already resolved the address of
-                // the import functions and has no way to "invalidate" the
-                // resolution to an address. Thus it is not possible to reload
-                // the library with a different one, or even unload and then
-                // reload again as it might land the methods at a different
-                // address.
-                using var lib = Library.InitializeLLVM( LibLLVMCodeGenTarget.CodeGenTarget_ARM );
-            } );
-        }
-
-        [DistinctProcessTestMethod]
-        public void TestLibraryInitWithAllFails( )
-        {
-            _ = Assert.ThrowsExactly<ArgumentOutOfRangeException>(()=>
-            {
-                using var lib = Library.InitializeLLVM( LibLLVMCodeGenTarget.CodeGenTarget_All );
-            } );
+                Assert.IsNotNull(lib2);
+            }
         }
     }
 }

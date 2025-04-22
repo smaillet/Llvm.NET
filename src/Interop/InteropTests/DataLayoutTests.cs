@@ -19,7 +19,7 @@ namespace Ubiquity.NET.Llvm.Interop.UT
         [DistinctProcessTestMethod]
         public void TestParseKnownBad( )
         {
-            using var library = Library.InitializeLLVM(LibLLVMCodeGenTarget.CodeGenTarget_ARM);
+            using var library = Library.InitializeLLVM();
             var utf8Span = "badlayout"u8;
             unsafe
             {
