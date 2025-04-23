@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
@@ -63,19 +64,45 @@ namespace ReferenceEqualityVerifier
         // hardening to handle all cases. With better testing of them all.
         private static bool AreEquatable( ITypeSymbol lht, ITypeSymbol rht )
         {
-            // NOTE: Nullability of the source types is NOT relevant in this context so all comparisons are done without
-            //       consideration for the nullable annotation. (That is, `Thing` and `Thing?` are the same)
-            //
-            // In particular this currently looks ONLY for explicit IEquatable<T> where T is explicitly rht or lht. That is,
-            // it currently does not consider implicit casting and equivalences where one side implements or is derived
-            // from the type argument to IEquality<T>.
             var commonItfs = from itf in lht.AllInterfaces.Union(rht.AllInterfaces, SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>()
                              where itf.MetadataName == "IEquatable`1"
-                             where SymbolEqualityComparer.Default.Equals(itf.TypeArguments[0], lht) // equatable to left?
-                                || SymbolEqualityComparer.Default.Equals(itf.TypeArguments[0], rht) // equatable to right?
+                             where AreEquivalent(itf.TypeArguments[0], lht, rht)
                              select itf;
 
             return commonItfs.Any();
+        }
+
+        // NOTE: Nullability of the source types is NOT relevant in this context so all comparisons are done without
+        //       consideration for the nullable annotation. (That is, `Thing` and `Thing?` are the same)
+        //
+        // In particular this currently looks ONLY for explicit IEquatable<T> where T is explicitly rht or lht. That is,
+        // it currently does not consider implicit casting and equivalences where one side implements or is derived
+        // from the type argument to IEquality<T>.
+        private static bool AreEquivalent( ITypeSymbol typeSymbol, ITypeSymbol lht, ITypeSymbol rht )
+        {
+            if (IsImplicitlyCastableTo(lht, typeSymbol))
+            {
+                return true;
+            }
+
+            if (IsImplicitlyCastableTo(rht, typeSymbol))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsImplicitlyCastableTo( ITypeSymbol derivedType, ITypeSymbol testBaseType )
+        {
+            for(ITypeSymbol? baseType = derivedType; baseType != null; baseType = baseType.BaseType)
+            {
+                if(SymbolEqualityComparer.Default.Equals(baseType, testBaseType))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // NOTE: Nullability of the types is NOT relevant in this context so all comparisons are done without
