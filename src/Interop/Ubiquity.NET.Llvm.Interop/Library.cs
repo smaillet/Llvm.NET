@@ -2,8 +2,6 @@
 // Copyright (c) Ubiquity.NET Contributors. All rights reserved.
 // </copyright>
 
-using System;
-
 using static Ubiquity.NET.Llvm.Interop.ABI.libllvm_c.TargetRegistration;
 
 namespace Ubiquity.NET.Llvm.Interop
@@ -19,17 +17,13 @@ namespace Ubiquity.NET.Llvm.Interop
         public void RegisterTarget( LibLLVMCodeGenTarget target, LibLLVMTargetRegistrationKind registrations = LibLLVMTargetRegistrationKind.TargetRegistration_All )
         {
             // NOTE: All logic for registering the targets is in native code.
-            //       If an invalid target is provided for the library loaded
-            //       in InitializeLLVM() below then the native code generates
-            //       an error which is transformed to an exception here.
-            //       Native and All are always allowed as they are generic
-            //       terms that are understood by the native code.
             LibLLVMRegisterTarget( target, registrations ).ThrowIfFailed();
         }
 
         /// <inheritdoc/>
         public void Dispose( )
         {
+            LLVMResetFatalErrorHandler();
             LLVMShutdown();
         }
 
@@ -37,37 +31,42 @@ namespace Ubiquity.NET.Llvm.Interop
         /// <returns><see cref="ILibLlvm"/> implementation for the library</returns>
         public static ILibLlvm InitializeLLVM()
         {
-            // If this is the first call and the library resolver is applied, then validate the
-            // version and hook up the fatal error handler.
-            if(NativeLibraryResolver.Apply())
+            // If this is the first call and the library resolver is applied, then validate
+            // the version from the library for sanity.
+            if(!NativeLibraryResolver.Apply())
             {
-                // Verify the version of LLVM in LibLLVM.
-                LLVMGetVersion( out uint actualMajor, out uint actualMinor, out uint actualPatch );
-                if(actualMajor != SupportedVersionMajor
-                || actualMinor != SupportedVersionMinor
-                || actualPatch < SupportedVersionPatch // allow later patches...
-                )
-                {
-                    string msgFmt = Resources.Mismatched_LibLLVM_version_Expected_0_1_2_Actual_3_4_5;
-                    string msg = string.Format( CultureInfo.CurrentCulture
-                                              , msgFmt
-                                              , SupportedVersionMajor
-                                              , SupportedVersionMinor
-                                              , SupportedVersionPatch
-                                              , actualMajor
-                                              , actualMinor
-                                              , actualPatch
-                                              );
-                    throw new InvalidOperationException( msg );
-                }
+                throw new InvalidOperationException("LLVM library was previously initialized. Re-init is not supported in the native library");
+            }
 
-                unsafe
-                {
-                    LLVMInstallFatalErrorHandler( &FatalErrorHandler );
-                }
+            // Verify the version of LLVM in LibLLVM.
+            LLVMGetVersion( out uint actualMajor, out uint actualMinor, out uint actualPatch );
+            if(actualMajor != SupportedVersionMajor
+            || actualMinor != SupportedVersionMinor
+            || actualPatch < SupportedVersionPatch // allow later patches...
+            )
+            {
+                string msgFmt = Resources.Mismatched_LibLLVM_version_Expected_0_1_2_Actual_3_4_5;
+                string msg = string.Format( CultureInfo.CurrentCulture
+                                            , msgFmt
+                                            , SupportedVersionMajor
+                                            , SupportedVersionMinor
+                                            , SupportedVersionPatch
+                                            , actualMajor
+                                            , actualMinor
+                                            , actualPatch
+                                            );
+                throw new InvalidOperationException( msg );
             }
 
             return new Library();
+        }
+
+        private Library()
+        {
+            unsafe
+            {
+                LLVMInstallFatalErrorHandler( &FatalErrorHandler );
+            }
         }
 
         private readonly Lazy<ImmutableArray<LibLLVMCodeGenTarget>> LazyTargets = new(GetSupportedTargets);

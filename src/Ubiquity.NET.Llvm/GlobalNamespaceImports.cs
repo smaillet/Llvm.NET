@@ -41,6 +41,7 @@ global using Ubiquity.NET.Llvm.Instructions;
 global using Ubiquity.NET.Llvm.Interop;
 global using Ubiquity.NET.Llvm.Interop.ABI.libllvm_c;
 global using Ubiquity.NET.Llvm.Interop.ABI.llvm_c;
+global using Ubiquity.NET.Llvm.Interop.ABI.StringMarshaling;
 global using Ubiquity.NET.Llvm.Metadata;
 global using Ubiquity.NET.Llvm.Properties;
 global using Ubiquity.NET.Llvm.Types;
@@ -49,6 +50,7 @@ global using Ubiquity.NET.Llvm.Values;
 // Extended C API
 global using static Ubiquity.NET.Llvm.Interop.ABI.libllvm_c.MetadataBindings;
 global using static Ubiquity.NET.Llvm.Interop.ABI.libllvm_c.ModuleBindings;
+global using static Ubiquity.NET.Llvm.Interop.ABI.libllvm_c.ValueBindings;
 
 // Official LLVM-C API
 global using static Ubiquity.NET.Llvm.Interop.ABI.llvm_c.Analysis;

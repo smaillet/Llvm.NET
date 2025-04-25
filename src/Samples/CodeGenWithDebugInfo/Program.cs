@@ -84,7 +84,8 @@ namespace CodeGenWithDebugInfo
             var abiAttributes = targetABI.BuildTargetDependentFunctionAttributes( context );
             #endregion
 
-            var diFile = diBuilder.CreateFile( srcPath );
+            Debug.Assert(compilationUnit.File is not null, "File was set in creation, should NOT be null");
+            DIFile diFile = compilationUnit.File;
 
             #region CreatingBasicTypesWithDebugInfo
             // Create basic types used in this compilation
